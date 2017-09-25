@@ -7,12 +7,9 @@
 
 from random import seed
 # from random import randrange
-from csv import reader
 from math import sqrt
 import numpy as np
 import pandas as pd
-from joblib import Parallel, delayed
-import multiprocessing
 # Load a CSV file
 
 
@@ -39,7 +36,6 @@ def split_5fold(dataset):
 
 # Global Variables
 ymean = 0
-num_cores = multiprocessing.cpu_count()
 
 # Calculate Sum of Squared Errors Total
 
@@ -89,11 +85,7 @@ def rmse_metric(actual, predicted):
     return np.sqrt(mean_error)
 
 
-def extract_x(row):
-    return [row['bedrooms'], row['bathrooms'],
-            row['sqft_living'], row['sqft_lot'], row['grade']]
 # Evaluate an algorithm using a train/test split
-
 
 def evaluate_algorithm(dataset, algorithm, *args):
     # train, test = train_test_split(dataset, split)
@@ -102,22 +94,18 @@ def evaluate_algorithm(dataset, algorithm, *args):
         sets = split_5fold(dataset)
         test = sets.pop(i)
         frames = [sets[0], sets[1], sets[2], sets[3]]
+# Evaluate an algorithm using a train/test split
         train = pd.concat(frames)
-
         ytest = [row['price'] for index, row in test.iterrows()]
         test_set = [[row['bedrooms'], row['bathrooms'],
                      row['sqft_living'], row['sqft_lot'], row['grade']] for index, row in test.iterrows()]
-
         predicted = algorithm(train, test_set, *args)
-
-        ymean = [row['price'] for index, row in train.iterrows()]
         rmse = rmse_metric(ytest, predicted)
         rmse_avg += rmse
         sst_avg += tsse(ytest, ymean)
         ssr_avg += rsse(ytest, predicted)
         sse_avg += esse(predicted, ymean)
         r_sq_avg += r_sq(rsse(ytest, predicted), tsse(ytest, ymean))
-
     return [rmse_avg / 5, sst_avg / 5, ssr_avg / 5, sse_avg / 5, r_sq_avg / 5]
 
 # Calculate the mean value of a list of numbers
@@ -148,26 +136,24 @@ def coefficients(dataset):
     x = [[row['bedrooms'], row['bathrooms'],
           row['sqft_living'], row['sqft_lot'], row['grade']] for index, row in dataset.iterrows()]
     y = [row['price'] for index, row in dataset.iterrows()]
-
     x = np.asarray(x)
     y = np.asarray(y)
-
     x_mean = mean(x)
-    y_mean = mean(y)
+    ymean = mean(y)
     x = np.swapaxes(x, 0, 1)
-
-    eq_coeffs = [[0 for i in range(len(x))] for j in range(len(x))]
+    coeffs = [[0 for i in range(len(x))] for j in range(len(x))]
     for i in range(len(x)):
         for j in range(len(x)):
             if i == j:
-                eq_coeffs[i][j] = variance(x[i], x_mean[i])
+                coeffs[i][j] = variance(x[i], x_mean[i])
+            elif i > j:
+                coeffs[i][j] = coeffs[j][i]
             else:
-                eq_coeffs[i][j] = covariance(x[i], x_mean[i], x[j], x_mean[j])
-
-    eq_ycovs = np.array([covariance(y, y_mean, x[0], x_mean[0]), covariance(y, y_mean, x[1], x_mean[1]), covariance(
-        y, y_mean, x[2], x_mean[2]), covariance(y, y_mean, x[3], x_mean[3]), covariance(y, y_mean, x[4], x_mean[4])])
-    b_coeffs = np.linalg.solve(eq_coeffs, eq_ycovs)
-    b0 = y_mean - (np.sum(b_coeffs * x_mean))
+                coeffs[i][j] = covariance(x[i], x_mean[i], x[j], x_mean[j])
+    eq_ycovs = np.array([covariance(y, ymean, x[0], x_mean[0]), covariance(y, ymean, x[1], x_mean[1]), covariance(
+        y, ymean, x[2], x_mean[2]), covariance(y, ymean, x[3], x_mean[3]), covariance(y, ymean, x[4], x_mean[4])])
+    b_coeffs = np.linalg.solve(coeffs, eq_ycovs)
+    b0 = ymean - (np.sum(b_coeffs * x_mean))
     return [b0, b_coeffs]
 
 # Calculate coefficients
