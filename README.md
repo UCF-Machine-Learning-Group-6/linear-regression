@@ -1,8 +1,8 @@
 # linear-regression
-Requires pandas, numpy and scikit-learn to run.
+Requires pandas, numpy, matplotlib and scikit-learn to run.
 To run single feature linear regression:
 python ML_Simple_Regression.py
-To run multi featured linear regression w/ scikit learn:
+To run single featured linear regression w/ scikit learn:
 python ML_Simple_Regression_sklearn.py
 To run multi featured linear regression use:
 python ML_Multiple_Regression.py
