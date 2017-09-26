@@ -186,7 +186,7 @@ filename = 'kc_house_data_pruned_nohead.csv'
 dataset = load_csv(filename)
 
 # Evaluate Algorithm
-print('Price vs. Bedrooms, Bathrooms, Living Sqft, Lot SqFt, Grade')
 res_mlr = evaluate_algorithm(dataset, multiple_linear_regression)
+print('Price vs. Bedrooms, Bathrooms, Living Sqft, Lot SqFt, Grade')
 print('RMSE: %.3f TSSE: %.3f RSSE: %.3f ESSE: %.3f R^2: %.3f' %
       (res_mlr[0], res_mlr[1], res_mlr[2], res_mlr[3], res_mlr[4]))
